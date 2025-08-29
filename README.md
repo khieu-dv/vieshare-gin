@@ -44,11 +44,8 @@ This API provides a complete backend solution with **SQLite** database, **Pocket
 - Go 1.19 or higher
 - Git
 
-### Download FrontEnd, please checkout
+### Download FrontEnd, please checkout [Gin Framework](https://github.com/khieu-dv/vieshare.git)
 
-```bash
-git clone https://github.com/khieu-dv/vieshare.git
-```
 
 ### 1. Clone the Repository
 
