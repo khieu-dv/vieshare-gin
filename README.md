@@ -6,14 +6,6 @@ Welcome to **VieShare Gin Private API** - A PocketBase-compatible backend API bu
 
 This API provides a complete backend solution with **SQLite** database, **PocketBase-compatible** endpoints, **JWT** authentication, and **Redis** caching support.
 
-## Features
-
-### 🚀 **PocketBase-Compatible API**
-- Complete REST API endpoints matching PocketBase format: `/api/collections/{collection}/records`
-- Support for all CRUD operations (GET, POST, PATCH, DELETE)
-- Advanced filtering, sorting, and pagination
-- Relation expansion with `expand` parameter
-- Health check endpoint at `/api/health`
 
 ### 🏪 **E-commerce Collections**
 - **Users**: User authentication and profiles
@@ -100,13 +92,6 @@ go build -o vieshare-gin .
 ./vieshare-gin
 ```
 
-### With SSL (Optional)
-Generate SSL certificates:
-```bash
-mkdir cert/
-sh generate-certificate.sh
-```
-Set `SSL=TRUE` in your `.env` file.
 
 ## API Documentation
 
