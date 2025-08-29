@@ -65,7 +65,7 @@ The application uses SQLite with auto-initialization. The database schema is aut
 
 Create and configure your `.env` file:
 ```bash
-cp .env_rename_me .env
+cp .env_example .env
 ```
 
 **Required environment variables:**
