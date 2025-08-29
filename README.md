@@ -76,19 +76,10 @@ cp .env_rename_me .env
 # Server Configuration
 PORT=9000
 ENV=LOCAL
-SSL=FALSE
-API_VERSION=2.0
 
 # Database Configuration
 DB_PATH=./data/app.db
 
-# Redis Configuration (optional)
-REDIS_HOST=localhost:6379
-REDIS_PASSWORD=
-
-# JWT Configuration
-ACCESS_SECRET=your-access-secret
-REFRESH_SECRET=your-refresh-secret
 ```
 
 ## Running the Application
