@@ -1,0 +1,18 @@
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+
+# Logs #
+######################
+*.log
+
+# SENSITVE DATA #
+.gitconfig
+.env
+cert/
+
+# BUILD #
+./vieshare-gin
+*.exe
