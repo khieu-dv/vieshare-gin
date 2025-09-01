@@ -1,65 +1,19 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"net/http"
 	"os"
-	"runtime"
 
-	"github.com/VieShare/vieshare-gin/controllers"
 	"github.com/VieShare/vieshare-gin/db"
 	_ "github.com/VieShare/vieshare-gin/docs"
 	"github.com/VieShare/vieshare-gin/forms"
+	"github.com/VieShare/vieshare-gin/routers"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	uuid "github.com/google/uuid"
 	"github.com/joho/godotenv"
-	swaggerfiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger" // gin-swagger middleware
 )
 
-// CORSMiddleware ...
-// CORS (Cross-Origin Resource Sharing)
-func CORSMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost")
-		c.Writer.Header().Set("Access-Control-Max-Age", "86400")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Origin, Authorization, Accept, Client-Security-Token, Accept-Encoding, x-access-token")
-		c.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length")
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-
-		if c.Request.Method == "OPTIONS" {
-			fmt.Println("OPTIONS")
-			c.AbortWithStatus(200)
-		} else {
-			c.Next()
-		}
-	}
-}
-
-// RequestIDMiddleware ...
-// Generate a unique ID and attach it to each request for future reference or use
-func RequestIDMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		uuid := uuid.New()
-		c.Writer.Header().Set("X-Request-Id", uuid.String())
-		c.Next()
-	}
-}
-
-var auth = new(controllers.AuthController)
-
-// TokenAuthMiddleware ...
-// JWT Authentication middleware attached to each request that needs to be authenitcated to validate the access_token in the header
-func TokenAuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		auth.TokenValid(c)
-		c.Next()
-	}
-}
 
 // @title           VieShare Gin Private API
 // @version         2.0
@@ -96,8 +50,9 @@ func main() {
 	//Custom form validator
 	binding.Validator = new(forms.DefaultValidator)
 
-	r.Use(CORSMiddleware())
-	r.Use(RequestIDMiddleware())
+	// Setup middlewares
+	r.Use(routers.CORSMiddleware())
+	r.Use(routers.RequestIDMiddleware())
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 
 	//Start SQLite3 database
@@ -108,66 +63,16 @@ func main() {
 	//Example: db.GetRedis().Set(KEY, VALUE, at.Sub(now)).Err()
 	db.InitRedis(1)
 
+	// Setup V1 API routes
 	v1 := r.Group("/v1")
-	{
-		/*** START USER ***/
-		user := new(controllers.UserController)
+	routers.SetupV1Routes(v1, routers.TokenAuthMiddleware())
 
-		v1.POST("/user/login", user.Login)
-		v1.POST("/user/register", user.Register)
-		v1.GET("/user/logout", user.Logout)
-
-		/*** START AUTH ***/
-		auth := new(controllers.AuthController)
-
-		//Refresh the token when needed to generate new access_token and refresh_token for the user
-		v1.POST("/token/refresh", auth.Refresh)
-
-		/*** START Article ***/
-		article := new(controllers.ArticleController)
-
-		v1.POST("/article", TokenAuthMiddleware(), article.Create)
-		v1.GET("/articles", TokenAuthMiddleware(), article.All)
-		v1.GET("/article/:id", TokenAuthMiddleware(), article.One)
-		v1.PUT("/article/:id", TokenAuthMiddleware(), article.Update)
-		v1.DELETE("/article/:id", TokenAuthMiddleware(), article.Delete)
-	}
-
-	// PocketBase-compatible API routes
-	pb := new(controllers.PocketBaseController)
+	// Setup PocketBase-compatible API routes
 	api := r.Group("/api")
-	{
-		// Health check
-		api.GET("/health", pb.Health)
-		
-		// Collections CRUD operations
-		collections := api.Group("/collections/:collection")
-		{
-			collections.GET("/records", pb.ListRecords)
-			collections.GET("/records/:id", pb.GetRecord)
-			collections.POST("/records", pb.CreateRecord)
-			collections.PATCH("/records/:id", pb.UpdateRecord)
-			collections.DELETE("/records/:id", pb.DeleteRecord)
-		}
-	}
+	routers.SetupPocketBaseRoutes(api)
 
-	// Swagger docs
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
-
-	r.LoadHTMLGlob("./public/html/*")
-
-	r.Static("/public", "./public")
-
-	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"ginBoilerplateVersion": "v0.03",
-			"goVersion":             runtime.Version(),
-		})
-	})
-
-	r.NoRoute(func(c *gin.Context) {
-		c.HTML(404, "404.html", gin.H{})
-	})
+	// Setup static routes and documentation
+	routers.SetupStaticRoutes(r)
 
 	port := os.Getenv("PORT")
 
